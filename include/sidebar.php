@@ -17,7 +17,7 @@ $product_query = mysqli_query($connection, $query);
 
           ?>
             <li>
-              <a href="individual_category.php?c_id=<?php echo $category_id  ?>"><?php echo $category_name ?></a>
+              <a href="category.php?c_id=<?php echo $category_id  ?>"><?php echo $category_name ?></a>
             </li>
           <?php } ?>
         </ul>

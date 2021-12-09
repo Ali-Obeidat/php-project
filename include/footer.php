@@ -1,5 +1,5 @@
-<?php $connection = mysqli_connect("localhost", "root", "", "ecommerce"); ?>
-<footer class="footer-area section_gap" style="padding-bottom:40px">
+<?php $connection = mysqli_connect("localhost", "root", "", "ecommerce2"); ?>
+<footer class="footer-area section_gap">
   <div class="container">
     <div class="row">
       <div class="col-lg-2 col-md-6 single-footer-widget">
@@ -9,7 +9,7 @@
           $sql    = "SELECT * FROM categories";
           $result = mysqli_query($connection, $sql);
           while ($row = mysqli_fetch_assoc($result)) { ?>
-            <li><a href="individual_category.php?c_id=<?php echo $row['category_id']; ?>"><?php echo $row['category_name']; ?></a></li>
+            <li><a href="category.php?c_id=<?php echo $row['category_id']; ?>"><?php echo $row['category_name']; ?></a></li>
           <?php }
           ?>
         </ul>
@@ -63,6 +63,17 @@
 
 <!-- Optional JavaScript -->
 <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script>
+  var alert = document.querySelector(".swal2-confirm");
+  if (alert !== null) {
+    alert.addEventListener("click", function() {
+      if (location.href == "http://localhost/Last-Version/test.php") {
+        location.assign("index.php");
+      }
+    })
+  }
+</script>
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="js/jquery-3.2.1.min.js"></script>
 <script src="js/popper.js"></script>
 <script src="js/bootstrap.min.js"></script>
