@@ -53,13 +53,6 @@ require_once("./include/header.php")
                   $product_price = $row['product_price'];
                   $product_price_on_sale = $row['product_price_on_sale'];
                   $sale_status = $row['sale_status'];
-
-
-
-
-
-
-
             ?>
                   <div class="col-lg-4 col-md-6">
                     <div class="single-product">

@@ -1,8 +1,16 @@
 <?php
+ob_start();
 $connection = mysqli_connect("localhost", "root", "", "ecommerce2");
 session_start();
+
+// if you not user or admin
 if (!isset($_SESSION['userLogin']) && !isset($_SESSION['adminLogin'])) {
   header("location: login.php");
+}
+
+// if shopping cart is empty
+if (!isset($_SESSION['shopping_cart']) || count($_SESSION['shopping_cart']) == 0) {
+  header("location: category.php");
 }
 
 function refresh($site)
@@ -10,36 +18,12 @@ function refresh($site)
   echo " <meta http-equiv='refresh' content='0;$site' />";
 }
 
+$errors = [];
+
 require_once("include/header.php");
 
-$errors = [];
-if (isset($_GET['proceed'])) {
-  $state = check($_GET['name'], $_GET['phone'], $_GET['city'], $_GET['district']);
-  if ($state == true) {
-    $totalQuantity = 0;
-    foreach ($_SESSION['shopping_cart'] as $keys => $values) {
-      $totalQuantity += $values['item_quantity'];
-    }
-    $query = "INSERT INTO orders (user_id,order_status,order_date,product_quantity,order_total_amount,city_name	, street_name , phone_number)
-              VALUES ({$_SESSION['userLogin']},'Order Placed',NOW(),{$totalQuantity},{$_SESSION['cart_total_price']},'{$_GET['city']}','{$_GET['district']}','{$_GET['phone']}')";
-    mysqli_query($connection, $query);
-    $query   = "SELECT order_id FROM orders WHERE orders.user_id = '{$_SESSION['userLogin']}' ORDER BY order_id DESC LIMIT 1;";
-    $result  = mysqli_query($connection, $query);
-    $row     = mysqli_fetch_assoc($result);
-    $orderId = $row['order_id'];
-    foreach ($_SESSION['shopping_cart'] as $keys => $values) {
-      $query = "INSERT INTO users_cart (user_id,product_id,order_id,quantity,sub_total,size_cart) 
-     VALUES ('{$_SESSION['userLogin']}','{$values['item_id']}','{$orderId}','{$values['item_quantity']}','{$values['item_total_price']}', '{$values['item_size']}')";
-      mysqli_query($connection, $query);
-    }
-    // echo "<script> Swal.fire('The Order Confirmed','It will be delivered within 3 to 5 working days <br><br> Thank you for your visit  ','success') </script>";
-    unset($_SESSION['shopping_cart']);
-    unset($_SESSION['cart_total_price']);
-    $_SESSION['refresh'] = true;
-    sleep(1);
-    refresh('index.php');
-  }
-}
+
+
 
 function check($name, $phone, $city, $district)
 {
@@ -93,6 +77,25 @@ function check($name, $phone, $city, $district)
 
     .swal2-select {
       display: none;
+    }
+
+    .list li:not(.list li:nth-of-type(1)) {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #eee;
+      padding: 5px 0;
+    }
+
+    .list li:nth-of-type(1),
+    .list li:nth-last-of-type(1) {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #eee;
+      padding: 5px 0;
+    }
+
+    .list li span:nth-of-type(1) {
+      width: 120px;
     }
   </style>
 </head>
@@ -157,9 +160,8 @@ function check($name, $phone, $city, $district)
             <h2>Your Order</h2>
             <ul class="list">
               <li>
-                <a>Product
-                  <span>Total</span>
-                </a>
+                <span class="text-dark font-weight-bold">Product</span>
+                <span class="text-dark font-weight-bold">Total</span>
               </li>
               <?php
               if (isset($_SESSION['shopping_cart'])) {
@@ -167,11 +169,10 @@ function check($name, $phone, $city, $district)
                   if (is_array($values)) { ?>
 
                     <li>
-                      <a><?php echo $values['item_name']; ?>
-                        <span class="middle"><?php echo "x " . $values['item_quantity'] ?? ""; ?></span>
-                        <span class="middle"><?php echo $values['item_size'] ?? ""; ?></span>
-                        <span class="last"><?php echo "JD " . $values['item_total_price'] ?? ""; ?></span>
-                      </a>
+                      <span><?php echo $values['item_name']; ?></span>
+                      <span class="middle"><?php echo "x " . $values['item_quantity'] ?? ""; ?></span>
+                      <span class="middle"><?php echo $values['item_size'] ?? ""; ?></span>
+                      <span class="last"><?php echo "JD " . $values['item_total_price'] ?? ""; ?></span>
                     </li>
               <?php }
                 }
@@ -179,13 +180,12 @@ function check($name, $phone, $city, $district)
             </ul>
             <ul class="list list_2">
               <li>
-                <a>Total
-                  <?php
-                  if (isset($_SESSION['cart_total_price'])) {
-                  ?>
-                    <span><?php echo "JD " . $_SESSION['cart_total_price']; ?></span>
-                  <?php } ?>
-                </a>
+                <span class="text-dark font-weight-bold">Total</span>
+                <?php
+                if (isset($_SESSION['cart_total_price'])) {
+                ?>
+                  <span class="text-dark font-weight-bold"><?php echo "JD " . $_SESSION['cart_total_price']; ?></span>
+                <?php } ?>
               </li>
             </ul>
             <div class="mt-3 creat_account">
@@ -204,98 +204,47 @@ function check($name, $phone, $city, $district)
 </section>
 <!--================End Checkout Area =================-->
 
-<!--================ start footer Area  =================-->
-<footer class="footer-area section_gap">
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-2 col-md-6 single-footer-widget">
-        <h4>Top Products</h4>
-        <ul>
-          <li><a href="#">Managed Website</a></li>
-          <li><a href="#">Manage Reputation</a></li>
-          <li><a href="#">Power Tools</a></li>
-          <li><a href="#">Marketing Service</a></li>
-        </ul>
-      </div>
-      <div class="col-lg-2 col-md-6 single-footer-widget">
-        <h4>Quick Links</h4>
-        <ul>
-          <li><a href="#">Jobs</a></li>
-          <li><a href="#">Brand Assets</a></li>
-          <li><a href="#">Investor Relations</a></li>
-          <li><a href="#">Terms of Service</a></li>
-        </ul>
-      </div>
-      <div class="col-lg-2 col-md-6 single-footer-widget">
-        <h4>Features</h4>
-        <ul>
-          <li><a href="#">Jobs</a></li>
-          <li><a href="#">Brand Assets</a></li>
-          <li><a href="#">Investor Relations</a></li>
-          <li><a href="#">Terms of Service</a></li>
-        </ul>
-      </div>
-      <div class="col-lg-2 col-md-6 single-footer-widget">
-        <h4>Resources</h4>
-        <ul>
-          <li><a href="#">Guides</a></li>
-          <li><a href="#">Research</a></li>
-          <li><a href="#">Experts</a></li>
-          <li><a href="#">Agencies</a></li>
-        </ul>
-      </div>
-      <div class="col-lg-4 col-md-6 single-footer-widget">
-        <h4>Newsletter</h4>
-        <p>You can trust us. we only send promo offers,</p>
-        <div class="form-wrap" id="mc_embed_signup">
-          <form target="_blank" action="https://spondonit.us12.list-manage.com/subscribe/post?u=1462626880ade1ac87bd9c93a&amp;id=92a4423d01" method="get" class="form-inline">
-            <input class="form-control" name="EMAIL" placeholder="Your Email Address" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Your Email Address '" required="" type="email">
-            <button class="click-btn btn btn-default">Subscribe</button>
-            <div style="position: absolute; left: -5000px;">
-              <input name="b_36c4fd991d266f23781ded980_aefe40901a" tabindex="-1" value="" type="text">
-            </div>
-
-            <div class="info"></div>
-          </form>
-        </div>
-      </div>
-    </div>
-    <div class="footer-bottom row align-items-center">
-      <p class="footer-text m-0 col-lg-8 col-md-12">
-        <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-        Copyright &copy;<script>
-          document.write(new Date().getFullYear());
-        </script> All rights reserved | This template is made with <i class="fa fa-heart-o" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib---</a>Downloaded from <a href="https://themeslab.org/" target="_blank">Themeslab</a>
-        <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-      </p>
-      <div class="col-lg-4 col-md-12 footer-social">
-        <a href="#"><i class="fa fa-facebook"></i></a>
-        <a href="#"><i class="fa fa-twitter"></i></a>
-        <a href="#"><i class="fa fa-dribbble"></i></a>
-        <a href="#"><i class="fa fa-behance"></i></a>
-      </div>
-    </div>
-  </div>
-</footer>
-<!--================ End footer Area  =================-->
-
-<!-- Optional JavaScript -->
-<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-<script src="js/jquery-3.2.1.min.js"></script>
-<script src="js/popper.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script src="js/stellar.js"></script>
-<script src="vendors/lightbox/simpleLightbox.min.js"></script>
-<script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
-<script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
-<script src="vendors/isotope/isotope-min.js"></script>
-<script src="vendors/owl-carousel/owl.carousel.min.js"></script>
-<script src="js/jquery.ajaxchimp.min.js"></script>
-<script src="js/mail-script.js"></script>
-<script src="vendors/jquery-ui/jquery-ui.js"></script>
-<script src="vendors/counter-up/jquery.waypoints.min.js"></script>
-<script src="vendors/counter-up/jquery.counterup.js"></script>
-<script src="js/theme.js"></script>
-</body>
-
-</html>
+<?php require_once("include/footer.php") ?>
+<?php
+if (isset($_GET['proceed'])) {
+  $state = check($_GET['name'], $_GET['phone'], $_GET['city'], $_GET['district']);
+  if ($state == true) {
+    $totalQuantity = 0;
+    foreach ($_SESSION['shopping_cart'] as $keys => $values) {
+      $totalQuantity += $values['item_quantity'];
+    }
+    $query = "INSERT INTO orders (user_id,order_status,order_date,product_quantity,order_total_amount,city_name	, street_name , phone_number)
+              VALUES ({$_SESSION['userLogin']},'Order Placed',NOW(),{$totalQuantity},{$_SESSION['cart_total_price']},'{$_GET['city']}','{$_GET['district']}','{$_GET['phone']}')";
+    mysqli_query($connection, $query);
+    $query   = "SELECT order_id FROM orders WHERE orders.user_id = '{$_SESSION['userLogin']}' ORDER BY order_id DESC LIMIT 1;";
+    $result  = mysqli_query($connection, $query);
+    $row     = mysqli_fetch_assoc($result);
+    $orderId = $row['order_id'];
+    foreach ($_SESSION['shopping_cart'] as $keys => $values) {
+      $query = "INSERT INTO users_cart (user_id,product_id,order_id,quantity,sub_total,size_cart) 
+     VALUES ('{$_SESSION['userLogin']}','{$values['item_id']}','{$orderId}','{$values['item_quantity']}','{$values['item_total_price']}', '{$values['item_size']}')";
+      mysqli_query($connection, $query);
+    }
+    unset($_SESSION['shopping_cart']);
+    unset($_SESSION['cart_total_price']);
+    echo "<script> Swal.fire('The Order Confirmed','It will be delivered within 3 to 5 working days <br><br> Thank you for purchasing from our store<br><br> Order Number is $orderId ','success') </script>";
+    //header("location:index.php");
+    // $_SESSION['refresh'] = true;
+    // sleep(1);
+    // refresh('index.php');
+  }
+}
+ob_end_flush();
+?>
+<script>
+  var alert = document.querySelector(".swal2-confirm");
+  if (alert !== null) {
+    alert.addEventListener("click", function() {
+      if (location.href == "http://localhost/Last-Version/test.php") {
+        location.assign("index.php");
+      } else {
+        location.assign("index.php");
+      }
+    })
+  }
+</script>

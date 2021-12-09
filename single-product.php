@@ -1,7 +1,20 @@
 <?php
+ob_start();
 session_start();
 $connection = mysqli_connect("localhost", "root", "", "ecommerce2");
 require_once("./include/header.php");
+// For Comments
+if (isset($_GET['comment'])) {
+  if (isset($_SESSION['userLogin'])) {
+    $sql = "INSERT INTO comments (user_id,prodcut_id,comment_content,comment_date) 
+    VALUES ('{$_SESSION['userLogin']}','{$_GET['id']}','{$_GET['message']}', NOW())";
+    mysqli_query($connection, $sql);
+    $id = $_GET['id'];
+    header("location: single-product.php?id={$id}");
+  } else {
+    echo "<script>alert('You must be logged in')</script>";
+  }
+}
 ?>
 
 
@@ -16,7 +29,7 @@ require_once("./include/header.php");
         </div>
         <div class="page_link">
           <a href="index.php">Home</a>
-          <a href="single-product.php">Product Details</a>
+          <a>Product Details</a>
         </div>
       </div>
     </div>
@@ -28,13 +41,12 @@ require_once("./include/header.php");
 <?php
 if (isset($_GET['id'])) {
   $p_id =  $_GET['id'];
+} else {
+  header("location:category.php");
 }
 global $connection;
 $query = "SELECT * FROM products WHERE product_id = {$p_id}";
 $single_product_query = mysqli_query($connection, $query);
-if (!$single_product_query) {
-  echo "NO";
-}
 ?>
 <div class="product_image_area">
   <div class="container">
@@ -269,3 +281,4 @@ if (!$single_product_query) {
 
   <!--================ start footer Area  =================-->
   <?php include("./include/footer.php") ?>
+  <?php ob_end_flush(); ?>

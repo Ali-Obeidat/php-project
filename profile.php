@@ -1,7 +1,6 @@
     <?php
     session_start();
     $connection = mysqli_connect("localhost", "root", "", "ecommerce2");
-    require_once("./include/db.php");
     // Save Data
     if (isset($_POST["save"])) {
         $new_user_name = $_POST["name"];
@@ -62,6 +61,18 @@
                     background-color: #ccc;
                     right: -100%;
                 }
+
+                @media(max-width:769px) {
+                    .orderTable {
+                        margin-top: 30px;
+                    }
+
+                    .profileSection {
+                        display: flex;
+                        justify-content: center;
+                        overflow: hidden;
+                    }
+                }
             </style>
         </head>
         <hr>
@@ -69,10 +80,13 @@
 
             <div class="container-fluid px-5">
                 <div class="mt-4 mb-4 p-3 d-flex row">
-                    <div class="col-6">
+                    <div class="col-lg-6 profileSection">
                         <div style="width: 250px;" class=" lineV d-flex flex-wrap position-relative">
-                            <img class="d-block circle" src="image/<?php echo $user_img ?>" height="250" width="250" />
-                            <div class="d-flex col-lg-12 flex-column align-items-center">
+                            <?php if (empty($user_img)) { ?>
+                                <img class="d-block circle" src="image/profile.png" height="250" width="250" />
+                            <?php } else { ?>
+                                <img class="d-block circle" src="image/<?php echo $user_img ?>" height="250" width="250" />
+                            <?php } ?> <div class="d-flex col-lg-12 flex-column align-items-center">
                                 <div class="name mt-3"><strong><?php echo $user_name ?></strong></div>
                                 <div id="user-email" class="mt-2"><?php echo $user_email ?></div>
                                 <div id="user-login-date"><?php echo 'Last Login: ' . $login_date ?></div>
@@ -81,7 +95,7 @@
                         </div>
 
                     </div>
-                    <div class="col-lg-6">
+                    <div class="col-lg-6 orderTable">
                         <div class="col-12">
                             <?php
                             if (isset($_GET['source'])) {
@@ -147,21 +161,23 @@
                                     break;
                                 default:
     ?>
-        <table class="table  table-hover">
-            <thead>
-                <tr>
-                    <th scope="col"> Order Number</th>
-                    <th scope="col"> Product quantity</th>
-                    <th scope="col"> order Status</th>
-                    <th scope="col"> Total Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
+        <div class="table-responsive">
+            <table class="table  table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col"> Order Number</th>
+                        <th scope="col"> Product quantity</th>
+                        <th scope="col"> order Status</th>
+                        <th scope="col"> Total Amount</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
                                     //get user orders
                                     $query = "SELECT * FROM orders 
                                           INNER JOIN users ON 
-                                          orders.user_id = users.user_id";
+                                          orders.user_id = users.user_id WHERE orders.user_id = {$_SESSION['userLogin']}";
 
                                     $select_order = mysqli_query($connection, $query);
                                     while ($row = mysqli_fetch_assoc($select_order)) {
@@ -172,23 +188,123 @@
                                         $order_date = $row['order_date'];
                                         $order_total_amount = $row['order_total_amount'];
 
-                ?>
+                    ?>
 
-                    <tr>
-                        <td scope="row"><?php echo "<strong>" . $order_id . "</strong>" ?></td>
-                        <td> <?php echo  $product_quantity ?></td>
-                        <td> <?php echo $order_status  ?></td>
-                        <td> <?php echo $order_total_amount  ?></td>
-                    </tr>
+                        <tr>
+                            <td scope="row"><?php echo "<strong>" . $order_id . "</strong>" ?></td>
+                            <td> <?php echo  $product_quantity ?></td>
+                            <td> <?php echo $order_status  ?></td>
+                            <td> <?php echo $order_total_amount  ?></td>
+                            <td><a href='profile.php?source=show_order&show=<?php echo $order_id ?>' class="btn main_btn btn-theme" style="padding: 0;
+    width: 70px;">Show</a></td>
+                        </tr>
 
-                <?php } ?>
-            </tbody>
-        </table>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
     <?php
                                     break;
                             }
     ?>
+    <?php
+        if (isset($_GET['source'])) {
+            $source = $_GET['source'];
+        } else {
+            $source = "";
+        }
+        switch ($source) {
+            case "show_order":
+                if (isset($_GET['show'])) {
+                    $id = $_GET['show'];
+                    $query = "SELECT * FROM orders 
+                    INNER JOIN users ON orders.user_id = users.user_id  WHERE orders.order_id = $id";
+                    $select_product = mysqli_query($connection, $query);
+                    $row = mysqli_fetch_assoc($select_product);
+                    $user_name = $row['user_name'];
+                    $order_id = $row['order_id'];
+    ?>
+                <div class="form-panel">
+                    <h4><i class="fa fa-angle-right"></i> Order# <?php echo $order_id ?></h4>
+                    <section id="unseen">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th>Id</th>
+                                        <th>Product Image</th>
+                                        <th> Product Name</th>
+                                        <th>Product Quantity</th>
+                                        <th>Product Size</th>
+                                        <th>Order Date</th>
+                                        <th>order_sub_total</th>
+                                        <th> Total</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
 
+
+                                    $query = "SELECT * FROM users_cart 
+                                                       INNER JOIN users ON users_cart.user_id = users.user_id 
+                                                       INNER JOIN orders ON users_cart.order_id = orders.order_id 
+                                                       INNER JOIN products ON users_cart.product_id = products.product_id WHERE orders.order_id =$id";
+                                    $select_product = mysqli_query($connection, $query);
+
+                                    while ($row = mysqli_fetch_assoc($select_product)) {
+                                        $order_id = $row['order_id'];
+                                        $users_cart_id = $row['user_cart_id'];
+                                        $user_name = $row['user_name'];
+                                        $product_name = $row['product_name'];
+                                        $product_quantity = $row['quantity'];
+                                        $product_size     = $row['size_cart'];
+                                        $product_img = $row['product_m_img'];
+                                        $order_sub_total = $row['sub_total'];
+                                        $order_date = $row['order_date'];
+                                        $order_total = $row['order_total_amount'];
+                                    ?>
+
+                                        <tr>
+                                            <td><?php echo $users_cart_id ?></td>
+                                            <td> <img width="70" src="image/<?php echo $product_img; ?>" alt=""> </td>
+                                            <td data-title="Company"><?php echo $product_name ?></td>
+                                            <td class="numeric">X <?php echo $product_quantity ?></td>
+                                            <td> <?php echo $product_size ?></td>
+                                            <td class="numeric"><?php echo $order_date ?></td>
+                                            <td class="numeric"><?php echo $order_sub_total ?> JD</td>
+                                            <td class="numeric"></td>
+                                        </tr>
+                                    <?php } ?>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td><?php echo $order_total ?> JD</td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <a style="align-items: end;" href="profile.php" class="btn btn-danger">Close</a </section>
+                </div>
+    <?php
+                }
+
+                break;
+
+
+
+
+
+            default:
+                break;
+        }
+    ?>
     </div>
     </div>
     </div>
@@ -198,4 +314,5 @@
 
 
     <?php } ?>
+
     <?php include("./include/footer.php") ?>

@@ -3,6 +3,8 @@ session_start();
 $connection = mysqli_connect("localhost", "root", "", "ecommerce2");
 
 require_once("include/header.php");
+
+// after do checkout
 if (isset($_SESSION['refresh']) && $_SESSION['refresh'] == true) {
   echo "<script> Swal.fire('The Order Confirmed','It will be delivered within 3 to 5 working days <br><br> Thank you for your visit  ','success') </script>";
   unset($_SESSION['refresh']);
@@ -46,7 +48,7 @@ if (isset($_SESSION['refresh']) && $_SESSION['refresh'] == true) {
 
 
 <!-- Start feature Area -->
-<section class="feature-area section_gap_bottom_custom ">
+<section class="feature-area section_gap_bottom_custom" style="padding-bottom: 0px;">
   <div class="container ">
     <div class="row">
       <div class="col-lg-3 col-md-6">
@@ -88,7 +90,7 @@ if (isset($_SESSION['refresh']) && $_SESSION['refresh'] == true) {
 
 <!--================ Feature Product Area =================-->
 
-<section style="margin-top:0 !important; margin-bottom:0 ; padding-top:0px" class="feature_product_area section_gap_bottom_custom">
+<section style="margin-top:0 !important; margin-bottom:0 ; padding-top:20px" class="feature_product_area section_gap_bottom_custom">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-12">
@@ -282,7 +284,7 @@ if (isset($_SESSION['refresh']) && $_SESSION['refresh'] == true) {
             <div class="product-img">
               <img class="img-fluid w-100" src="image/<?php echo $category_img ?>" alt="image" />
               <div class="p_icon">
-                <a href="individual_category.php?c_id=<?php echo $category_id; ?>">
+                <a href="category.php?c_id=<?php echo $category_id ?>">
                   <i class="ti-eye"></i>
                 </a>
 
@@ -306,3 +308,12 @@ if (isset($_SESSION['refresh']) && $_SESSION['refresh'] == true) {
 
 <!--================ start footer Area  =================-->
 <?php include("./include/footer.php") ?>
+<?php
+
+// after do signup
+if (isset($_SESSION['stateSignUp']) && $_SESSION['stateSignUp'] == true) {
+  echo "<script> Swal.fire('Successfully Registred','Welcome to our website','success') </script>";
+  unset($_SESSION['stateSignUp']);
+}
+
+?>
